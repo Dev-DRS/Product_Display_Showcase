@@ -8,27 +8,51 @@ class ARButton {
 
             let currentSession = null;
 
-            function onSessionStarted(session) {
 
-                session.addEventListener('end', onSessionEnded);
+			function onSessionStarted(session) {
+				console.log("AR session started");
+			
+				session.addEventListener('end', onSessionEnded);
+			
+				renderer.xr.setReferenceSpaceType('local');
+				renderer.xr.setSession(session);
+				button.textContent = 'STOP AR';
+			
+				currentSession = session;
+			}
+			
+			function onSessionEnded(/*event*/) {
+				console.log("AR session ended");
+			
+				if (currentSession) {
+					currentSession.removeEventListener('end', onSessionEnded);
+				}
+			
+				button.textContent = 'START AR';
+				currentSession = null;
+			}
 
-                renderer.xr.setReferenceSpaceType('local');
-                renderer.xr.setSession(session);
-                button.textContent = 'STOP AR';
+            // function onSessionStarted(session) {
 
-                currentSession = session;
+            //     session.addEventListener('end', onSessionEnded);
 
-            }
+            //     renderer.xr.setReferenceSpaceType('local');
+            //     renderer.xr.setSession(session);
+            //     button.textContent = 'STOP AR';
 
-            function onSessionEnded( /*event*/) {
+            //     currentSession = session;
 
-                currentSession.removeEventListener('end', onSessionEnded);
+            // }
 
-                button.textContent = 'START AR';
-                console.log("Start");
-                currentSession = null;
+            // function onSessionEnded( /*event*/) {
 
-            }
+            //     currentSession.removeEventListener('end', onSessionEnded);
+
+            //     button.textContent = 'START AR';
+            //     console.log("Start");
+            //     currentSession = null;
+
+            // }
 
             //
 
@@ -52,31 +76,48 @@ class ARButton {
 
             };
 
-            button.onclick = function () {
+            // button.onclick = function () {
 
-                // if ( currentSession === null ) {
+            //     if ( currentSession === null ) {
 
-                // 	navigator.xr.requestSession( 'immersive-ar', sessionInit ).then( onSessionStarted );
+            //     	navigator.xr.requestSession( 'immersive-ar', sessionInit ).then( onSessionStarted );
 
-                // } else {
+            //     } else {
 
-                // 	currentSession.end();
+            //     	currentSession.end();
 
-                // }
-                if (currentSession === null) {
-                    // Start a new AR session
-                    navigator.xr.requestSession('immersive-ar', sessionInit)
-                        .then(onSessionStarted)
-                        .catch((error) => {
-                            console.error('Failed to start AR session:', error);
-                        });
-                } else {
-                    // End the existing session
-                    currentSession.end();
-                    currentSession = null; // Clear the reference after ending the session
-                }
-            };
+            //     }
+              
+            // };
+			button.onclick = function () {
 
+				if (currentSession === null) {
+					console.log("Starting AR session...");
+			
+					// Attempt to end any existing session first
+					if (renderer.xr.getSession()) {
+						renderer.xr.getSession().end().then(() => {
+							console.log("Previous session ended, starting new session...");
+							startARSession();
+						}).catch((error) => {
+							console.error("Error ending previous session:", error);
+							startARSession();
+						});
+					} else {
+						startARSession();
+					}
+			
+				} else {
+					console.log("Ending AR session...");
+					currentSession.end();
+				}
+			};
+			
+			function startARSession() {
+				navigator.xr.requestSession('immersive-ar', sessionInit).then(onSessionStarted).catch((error) => {
+					console.error("Failed to start AR session:", error);
+				});
+			}
         }
 
         function disableButton() {
