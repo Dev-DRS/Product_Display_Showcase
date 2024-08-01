@@ -30868,6 +30868,7 @@ class ARButton {
         function showStartAR() {
             let currentSession = null;
             function onSessionStarted(session) {
+                console.log("AR session started");
                 session.addEventListener("end", onSessionEnded);
                 renderer.xr.setReferenceSpaceType("local");
                 renderer.xr.setSession(session);
@@ -30875,11 +30876,24 @@ class ARButton {
                 currentSession = session;
             }
             function onSessionEnded() {
-                currentSession.removeEventListener("end", onSessionEnded);
+                console.log("AR session ended");
+                if (currentSession) currentSession.removeEventListener("end", onSessionEnded);
                 button.textContent = "START AR";
-                console.log("Start");
                 currentSession = null;
             }
+            // function onSessionStarted(session) {
+            //     session.addEventListener('end', onSessionEnded);
+            //     renderer.xr.setReferenceSpaceType('local');
+            //     renderer.xr.setSession(session);
+            //     button.textContent = 'STOP AR';
+            //     currentSession = session;
+            // }
+            // function onSessionEnded( /*event*/) {
+            //     currentSession.removeEventListener('end', onSessionEnded);
+            //     button.textContent = 'START AR';
+            //     console.log("Start");
+            //     currentSession = null;
+            // }
             //
             button.style.display = "";
             button.style.cursor = "pointer";
@@ -30892,10 +30906,35 @@ class ARButton {
             button.onmouseleave = function() {
                 button.style.opacity = "0.5";
             };
+            // button.onclick = function () {
+            //     if ( currentSession === null ) {
+            //     	navigator.xr.requestSession( 'immersive-ar', sessionInit ).then( onSessionStarted );
+            //     } else {
+            //     	currentSession.end();
+            //     }
+            // };
             button.onclick = function() {
-                if (currentSession === null) navigator.xr.requestSession("immersive-ar", sessionInit).then(onSessionStarted);
-                else currentSession.end();
+                if (currentSession === null) {
+                    console.log("Starting AR session...");
+                    // Attempt to end any existing session first
+                    if (renderer.xr.getSession()) renderer.xr.getSession().end().then(()=>{
+                        console.log("Previous session ended, starting new session...");
+                        startARSession();
+                    }).catch((error)=>{
+                        console.error("Error ending previous session:", error);
+                        startARSession();
+                    });
+                    else startARSession();
+                } else {
+                    console.log("Ending AR session...");
+                    currentSession.end();
+                }
             };
+            function startARSession() {
+                navigator.xr.requestSession("immersive-ar", sessionInit).then(onSessionStarted).catch((error)=>{
+                    console.error("Failed to start AR session:", error);
+                });
+            }
         }
         function disableButton() {
             button.style.display = "";
@@ -30912,7 +30951,7 @@ class ARButton {
         }
         function stylizeElement(element) {
             element.style.position = "absolute";
-            element.style.bottom = "20px";
+            element.style.bottom = "90px";
             element.style.padding = "12px 6px";
             element.style.border = "1px solid #fff";
             element.style.borderRadius = "4px";
@@ -31019,7 +31058,7 @@ class VRButton {
         }
         function stylizeElement(element) {
             element.style.position = "absolute";
-            element.style.bottom = "20px";
+            element.style.bottom = "0px";
             element.style.padding = "12px 6px";
             element.style.border = "1px solid #fff";
             element.style.borderRadius = "4px";
